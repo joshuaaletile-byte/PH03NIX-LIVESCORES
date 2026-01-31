@@ -4,7 +4,7 @@ async function renderMatches() {
   container.innerHTML = "";
 
   try {
-    const res = await fetch('https://YOUR_BACKEND_URL/api/live-matches');
+    const res = await fetch('https://https://ph03nix-backend.onrender.com/api/live-matches');
     const matches = await res.json();
 
     matches.forEach(match => {
