@@ -2,22 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PH03NIX LIVESCORES</title>
 
   <style>
-    /* ===== RESET ===== */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
-    /* ===== GLOBAL ===== */
     body {
       background: #0b0f14;
       color: #ffffff;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: system-ui, sans-serif;
       padding: 16px;
     }
 
@@ -28,8 +26,8 @@
 
     header h1 {
       font-size: 22px;
-      letter-spacing: 1px;
       color: #00ffcc;
+      letter-spacing: 1px;
     }
 
     header p {
@@ -38,8 +36,35 @@
       margin-top: 4px;
     }
 
-    /* ===== MATCH LIST ===== */
+    #premium-btn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: none;
+      background: gold;
+      color: #000;
+      font-weight: bold;
+    }
+
+    #filters {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    #filters button {
+      background: #151a21;
+      color: #00ffcc;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+
     #matches {
+      margin-top: 20px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -47,8 +72,8 @@
 
     .match-card {
       background: #151a21;
-      border-radius: 12px;
       padding: 14px;
+      border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.3);
     }
 
@@ -73,14 +98,37 @@
       opacity: 0.7;
     }
 
-    /* ===== STATES ===== */
     .center {
       text-align: center;
       opacity: 0.7;
       margin-top: 40px;
     }
 
-    /* ===== FOOTER ===== */
+    #fun {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    #fun h3 {
+      margin-bottom: 10px;
+    }
+
+    #fun button {
+      margin: 5px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: none;
+      background: #00ffcc;
+      color: #000;
+      font-weight: bold;
+    }
+
+    #vote-msg {
+      margin-top: 8px;
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
     footer {
       margin-top: 40px;
       text-align: center;
@@ -95,11 +143,28 @@
   <header>
     <h1>PH03NIX LIVESCORES</h1>
     <p>Global • Mobile First • Live Football</p>
+    <button id="premium-btn" onclick="goPremium()">⭐ Go Premium</button>
+
+    <div id="filters">
+      <button onclick="setLeague('ALL')">ALL</button>
+      <button onclick="setLeague('Premier League')">EPL</button>
+      <button onclick="setLeague('La Liga')">La Liga</button>
+      <button onclick="setLeague('Serie A')">Serie A</button>
+      <button onclick="setLeague('UEFA Champions League')">UCL</button>
+    </div>
   </header>
 
   <main>
     <div id="matches" class="center">Loading live matches…</div>
   </main>
+
+  <section id="fun">
+    <h3>Who will win?</h3>
+    <button onclick="vote()">🔥 Home</button>
+    <button onclick="vote()">⚽ Draw</button>
+    <button onclick="vote()">💀 Away</button>
+    <p id="vote-msg"></p>
+  </section>
 
   <footer>
     Powered by PH03NIX
@@ -109,41 +174,65 @@
     const API_URL = "https://ph03nix-backend.onrender.com/api/live-matches";
     const container = document.getElementById("matches");
 
+    let allMatches = [];
+    let currentLeague = "ALL";
+
     async function loadLiveMatches() {
       try {
         const res = await fetch(API_URL);
-        const matches = await res.json();
-
-        if (!Array.isArray(matches) || matches.length === 0) {
-          container.innerHTML = "<p class='center'>No live matches right now</p>";
-          return;
-        }
-
-        container.innerHTML = "";
-
-        matches.forEach(match => {
-          const card = document.createElement("div");
-          card.className = "match-card";
-
-          card.innerHTML = `
-            <div class="league">${match.league}</div>
-            <div class="teams">
-              ${match.home}
-              <span class="score">${match.score}</span>
-              ${match.away}
-            </div>
-            <div class="minute">${match.minute}</div>
-          `;
-
-          container.appendChild(card);
-        });
-
-      } catch (error) {
+        allMatches = await res.json();
+        renderMatches();
+      } catch (err) {
         container.innerHTML = "<p class='center'>Failed to load live matches</p>";
       }
     }
 
+    function renderMatches() {
+      container.innerHTML = "";
+
+      const filtered = currentLeague === "ALL"
+        ? allMatches
+        : allMatches.filter(m => m.league === currentLeague);
+
+      if (!filtered || filtered.length === 0) {
+        container.innerHTML = "<p class='center'>No matches available</p>";
+        return;
+      }
+
+      filtered.forEach(match => {
+        const card = document.createElement("div");
+        card.className = "match-card";
+
+        card.innerHTML = `
+          <div class="league">${match.league}</div>
+          <div class="teams">
+            ${match.home}
+            <span class="score">${match.score}</span>
+            ${match.away}
+          </div>
+          <div class="minute">${match.minute}</div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function setLeague(league) {
+      currentLeague = league;
+      renderMatches();
+    }
+
+    function vote() {
+      document.getElementById("vote-msg").innerText =
+        "Vote recorded 🔥 (full feature coming soon)";
+    }
+
+    function goPremium() {
+      alert("Premium features coming soon 🚀");
+    }
+
     loadLiveMatches();
+    setInterval(loadLiveMatches, 60000);
   </script>
 
 </body>
